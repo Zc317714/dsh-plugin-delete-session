@@ -1,0 +1,53 @@
+{
+  "name": "dsh-plugin-delete-session",
+  "version": "0.2.0",
+  "description": "Delete a DeepSeek Harness session from the session list menu, with a mandatory confirmation before anything is removed.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zc317714/dsh-plugin-delete-session.git"
+  },
+  "homepage": "https://github.com/Zc317714/dsh-plugin-delete-session#readme",
+  "bugs": {
+    "url": "https://github.com/Zc317714/dsh-plugin-delete-session/issues"
+  },
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./client": "./src/client/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": []
+    }
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "dsh-bundle",
+    "cordis",
+    "session",
+    "delete"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-tools": "*"
+  }
+}

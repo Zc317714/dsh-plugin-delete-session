@@ -1,0 +1,13 @@
+# dsh-plugin-delete-session bundle patch: inserts the delete-session plugin
+# row into the web profile roster (applied as a profile bundle layer through
+# the `dsh.bundle.patch` manifest field).
+#
+# The row references the package by name, so the host half (exports ".") runs
+# in the host process and registers the `delete_session` / `list_sessions`
+# tools. `config` restates every owned key so later layers can override
+# individual values while keeping this bundle first in the stack.
+- insert:
+    - id: delete-session
+      name: dsh-plugin-delete-session
+      config:
+        confirmationTtlMs: 120000
