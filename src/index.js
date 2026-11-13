@@ -283,14 +283,30 @@ function renderListResult(value) {
 
 /**
  * Cordis plugin entry point.
+ *
+ * The plugin only hard-depends on the `tools` service. The harness web
+ * server is optional: profiles that do not ship the web app bundle never
+ * provide it, and waiting for it would keep the whole plugin (and therefore
+ * its tools) pending forever. The routes are registered through
+ * `ctx.inject(["webServer"], …)`, which starts them as soon as — and only
+ * when — the web server shows up.
  */
 export function apply(ctx, config = {}) {
   const confirmation = createConfirmationStore(config?.confirmationTtlMs ?? 120000);
   const { deleteSession, listSessions } = buildTools(ctx, confirmation);
   ctx.tools.register(deleteSession);
   ctx.tools.register(listSessions);
-  registerDeleteSessionRoutes(ctx, { collectSessions, performDeletion });
+
+  const deps = { collectSessions, performDeletion };
+  try {
+    ctx.inject(["webServer"], (webCtx) => {
+      registerDeleteSessionRoutes(webCtx, deps);
+    });
+  } catch {
+    // No registry support in this runtime: the tools still work.
+    registerDeleteSessionRoutes(ctx, deps);
+  }
 }
 
 export const name = "delete-session";
-export const inject = ["tools", "webServer"];
+export const inject = ["tools"];

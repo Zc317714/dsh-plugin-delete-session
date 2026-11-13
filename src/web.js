@@ -118,17 +118,31 @@ export function createDeleteSessionHandler(ctx, deps) {
  *
  * The web server is optional: when it is not available the plugin keeps
  * working with its tools only.
+ *
+ * @param ctx — the context used to look the service up and to scope effects.
+ * @param deps — `{ collectSessions, performDeletion }`.
+ * @param webServer — an already resolved web server service; when omitted
+ *   the service is looked up on `ctx`.
  */
-export function registerDeleteSessionRoutes(ctx, deps) {
-  let webServer;
-  try {
-    webServer = ctx.get("webServer");
-  } catch {
-    webServer = undefined;
+export function registerDeleteSessionRoutes(ctx, deps, webServer = undefined) {
+  let server = webServer;
+  if (!server) {
+    try {
+      server = ctx.get("webServer");
+    } catch {
+      server = undefined;
+    }
   }
-  if (!webServer || typeof webServer.register !== "function") return undefined;
+  if (!server) {
+    try {
+      server = ctx.webServer;
+    } catch {
+      server = undefined;
+    }
+  }
+  if (!server || typeof server.register !== "function") return undefined;
   return ctx.effect(
-    () => webServer.register({ kind: "prefix", path: "/delete-session", handler: createDeleteSessionHandler(ctx, deps) }),
+    () => server.register({ kind: "prefix", path: "/delete-session", handler: createDeleteSessionHandler(ctx, deps) }),
     "delete-session: private API routes",
   );
 }

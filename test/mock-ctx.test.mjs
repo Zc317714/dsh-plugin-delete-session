@@ -6,10 +6,12 @@ import { test } from "node:test";
 
 import { apply, name as pluginName } from "../src/index.js";
 
-function makeCtx({ live = [], stored = [], provider = null, root } = {}) {
+function makeCtx({ live = [], stored = [], provider = null, root, webServer = null } = {}) {
   const registered = new Map();
   const removed = [];
   const detached = [];
+  const effects = [];
+  const pending = [];
   const ctx = {
     tools: {
       register(definition) {
@@ -50,9 +52,23 @@ function makeCtx({ live = [], stored = [], provider = null, root } = {}) {
         return { answers: [{ id: "delete-session-confirm", selected: provider }] };
       },
     },
+    effect(fn) {
+      effects.push(fn);
+      fn();
+      return () => {};
+    },
+    inject(names, callback) {
+      if (names.every((name) => ctx[name] !== undefined)) {
+        callback(ctx);
+        return () => {};
+      }
+      pending.push({ names, callback });
+      return () => {};
+    },
   };
+  if (webServer) ctx.webServer = webServer;
   ctx.get = (key) => ctx[key];
-  return { ctx, registered, removed, detached };
+  return { ctx, registered, removed, detached, effects, pending };
 }
 
 test("plugin exposes the expected identity and registers both tools", () => {
@@ -163,4 +179,32 @@ test("ambiguous prefixes are reported with candidates", async () => {
   const result = await registered.get("delete_session").execute({ sessionId: "session-a" }, {});
   assert.equal(result.status, "ambiguous");
   assert.deepEqual(result.candidates.sort(), ["session-a1", "session-a2"]);
+});
+
+test("the plugin activates without a web server and only waits for it", () => {
+  const { ctx, registered, pending } = makeCtx();
+  apply(ctx, {});
+  // The tools must be available even though no web server exists yet.
+  assert.deepEqual([...registered.keys()].sort(), ["delete_session", "list_sessions"]);
+  // The web routes are deferred until the web server appears.
+  assert.deepEqual(pending.map((entry) => entry.names), [["webServer"]]);
+});
+
+test("the web routes are registered as soon as the web server is available", () => {
+  const routes = [];
+  const { ctx, registered, pending } = makeCtx({
+    webServer: {
+      register(route) {
+        routes.push(route);
+        return route;
+      },
+    },
+  });
+  apply(ctx, {});
+  assert.deepEqual([...registered.keys()].sort(), ["delete_session", "list_sessions"]);
+  assert.deepEqual(pending, []);
+  assert.equal(routes.length, 1);
+  assert.equal(routes[0].kind, "prefix");
+  assert.equal(routes[0].path, "/delete-session");
+  assert.equal(typeof routes[0].handler, "function");
 });

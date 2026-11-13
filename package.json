@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-delete-session",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Delete a DeepSeek Harness session from the session list menu, with a mandatory confirmation before anything is removed.",
   "license": "MIT",
   "repository": {

@@ -115,6 +115,10 @@ dsh plugin --profile <your-profile> add <path-to-this-package>
   reload (the client bundle does).
 * The package is plain JavaScript; there is no build step. `src/client/index.js`
   is the client bundle and is shipped as-is inside the `files` list.
+* The plugin only hard-depends on the `tools` service, so it activates in every
+  profile. The private HTTP routes (`/delete-session/api/...`) are registered
+  lazily, as soon as a `webServer` service appears; in a profile without one
+  the tools still work and the menu entry is still installed.
 
 ## License
 
